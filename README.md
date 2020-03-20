@@ -1,1 +1,0 @@
-# mulsoft-training
