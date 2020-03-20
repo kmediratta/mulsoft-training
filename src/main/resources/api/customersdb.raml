@@ -1,0 +1,35 @@
+#%RAML 1.0
+baseUri: https://anypoint.mulesoft.com/mocking/api/v1/links/7dc259fb-781a-4bb2-bd24-1532949efd61/ # 
+title: CustomersDB
+types:
+  Customer: !include customer.raml
+/customers:
+  get:
+    queryParameters:
+      customerAccess:
+        required: false
+        enum:
+          - admin
+          - standard
+          - guest
+    responses:
+      200:
+        body:
+          application/json:
+            type: Customer[]
+            examples:
+              output: !include customerexample.raml
+  post:
+    body:
+      application/json:
+        type: Customer
+        examples:
+          input: !include customerrequest.raml
+    responses:
+      201:
+        body:
+          application/json:
+            example:
+              message: Customer added successfully
+          
+        
