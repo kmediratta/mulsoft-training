@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="abc56860-3509-447c-ac09-2e47d5609c6d" >
+		<http:listener-connection host="0.0.0.0" port="8081" />
+	</http:listener-config>
+	<db:config name="Database_Config" doc:name="Database Config" doc:id="1348120a-7321-4ef5-825d-1b8c9c18fb45" >
+		<db:my-sql-connection host="localhost" port="3306" user="root" password="password" database="training" />
+	</db:config>
+	<http:request-config name="HTTP_Request_configuration" doc:name="HTTP Request configuration" doc:id="5c8d9060-b5f6-41c9-bca5-63dcd288567e" >
+		<http:request-connection host="localhost" port="8081" />
+	</http:request-config>
+	<http:request-config name="HTTP_Request_configuration1" doc:name="HTTP Request configuration" doc:id="0167126d-ee85-41fd-a2a6-e502855aad9f" >
+		<http:request-connection host="localhost" port="8081" />
+	</http:request-config>
+	<flow name="GetAllEmployees" doc:id="f99e1c6b-f3e3-4da7-a06d-089857a839e9" >
+		<http:listener doc:name="Listener" doc:id="e95d88ee-177d-4c4c-86c3-70ee4b33902d" config-ref="HTTP_Listener_config" path="/employees" allowedMethods="GET"/>
+		<db:select doc:name="Select" doc:id="5c056fa5-8ead-4d4b-b326-519fd24462b7" config-ref="Database_Config">
+			<db:sql >select * from employee</db:sql>
+		</db:select>
+		<ee:transform doc:name="Transform Message" doc:id="7d19cd8b-95ed-4fe5-a020-187850f03f92" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="GetEmployeeById" doc:id="d4f69390-16cb-4448-ade8-3da32f43bc8a" >
+		<http:listener doc:name="Listener" doc:id="d94dfc48-c881-4e40-93b1-d561be22c4fc" config-ref="HTTP_Listener_config" path="/employee" allowedMethods="GET"/>
+		<set-variable value='#[attributes.queryParams.EmpId default ""]' doc:name="Set Variable" doc:id="207e874b-3a8c-45b5-9f46-5eaaa801fe3b" variableName="EmployeeIdVar"/>
+		<db:select doc:name="Select" doc:id="3db3bc09-e8c8-456a-baf5-fa94913cceb7" config-ref="Database_Config">
+					<db:sql>SELECT * FROM employee WHERE EmpId= :EmpId</db:sql>
+					<db:input-parameters><![CDATA[#[{
+'EmpId': vars.EmployeeIdVar
+}]]]></db:input-parameters>
+				</db:select>
+		<ee:transform doc:name="Transform Message" doc:id="86c18323-1a08-4af8-805e-5e4196bd12c4" >
+			<ee:message >
+				<ee:set-payload resource="SelectByID.dwl" />
+				<ee:set-attributes resource="SelectByID.dwl" />
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="GetEmployeeByEmailAddress" doc:id="fd63d68a-30c8-4c2a-8374-c6560aed9f98" >
+		<http:listener doc:name="Listener" doc:id="80539cf2-333c-4d3c-9efa-f0a97fa0d43a" config-ref="HTTP_Listener_config" path="/EmployeesByEmail" allowedMethods="GET"/>
+		<set-variable value='#[attributes.queryParams.Email default ""]' doc:name="Set Variable" doc:id="a908c664-7388-4aee-9ba1-533472600197" variableName="EmailVar"/>
+		<db:select doc:name="Select" doc:id="5cf986da-0bd8-4212-bf85-e14c4821b830" config-ref="Database_Config">
+			<db:sql >select * from employee where Email=:email</db:sql>
+			<db:input-parameters ><![CDATA[#[{
+	'email':vars.EmailVar
+}]]]></db:input-parameters>
+		</db:select>
+		<ee:transform doc:name="Transform Message" doc:id="4c120401-a3f3-4847-a8b1-e8414706108a" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="AddEmployee" doc:id="ac6ce9f3-0d54-4ae3-8061-888c16af3b1d" >
+		<http:listener doc:name="Listener" doc:id="5e831999-638c-4b0d-b81a-8284c99440dd" config-ref="HTTP_Listener_config" path="/employee" allowedMethods="POST"/>
+		<set-variable value='#[payload.Email default ""]' doc:name="Set Variable" doc:id="e8059580-b386-4d6d-9754-002a18646526" variableName="EmailVar"/>
+		<set-variable value="#[payload]" doc:name="Set Variable" doc:id="c2c47c49-8195-47e2-b8e4-bdf9dce6f1b8" variableName="OldPayload"/>
+		<http:request method="GET" doc:name="Request" doc:id="96b1d67b-562f-4298-9c98-48b063392d48" path="/EmployeesByEmail" config-ref="HTTP_Request_configuration">
+			<http:query-params ><![CDATA[#[output application/java
+---
+{
+	"Email" : vars.EmailVar
+}]]]></http:query-params>
+		</http:request>
+		<flow-ref doc:name="Flow Reference" doc:id="1d7f8555-1505-4b16-ba6a-6bcb081e81c6" name="AddEmployeeSubFlow"/>
+	</flow>
+	<flow name="AddEmployeeSubFlow" doc:id="bc3140e2-968b-42fb-801a-ea2725082189" >
+		<choice doc:name="Choice" doc:id="0058265d-c80a-4aab-9a69-c55d7b975b36">
+			<when expression="#[payload[0] == null]">
+				<http:request method="GET" doc:name="Request" doc:id="f2ffdfc7-c1f6-4046-be96-cd9924b4db4e" path="/EmployeeMaxID" config-ref="HTTP_Request_configuration1"/>
+				<db:insert doc:name="Insert" doc:id="65a5dd6d-856c-4b4e-adb4-a5b35a97a9b1" config-ref="Database_Config">
+			<db:sql>insert into employee(EmpId,Name,Email,designation) values(:EmpId,:name,:email,:designation)</db:sql>
+			<db:input-parameters><![CDATA[#[{
+	'EmpId':payload.maxid[0]+1,
+	'name':vars.OldPayload.Name,
+	'email':vars.OldPayload.Email,
+	'designation':vars.OldPayload.designation
+}]]]></db:input-parameters>
+		</db:insert>
+				<ee:transform doc:name="Transform Message" doc:id="5604c61c-3a0d-4d86-9225-a91ff34c5462">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	message : 'data added successfully'
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+			
+</when>
+			<otherwise>
+				<ee:transform doc:name="Transform Message" doc:id="cecd0d28-842a-4a45-8820-24d825395c90">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"message":"Email already exist."
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</otherwise>
+		</choice>
+	</flow>
+	<flow name="UpdateEmployee" doc:id="5fc8774e-2a8f-493d-ad05-906f7fa382d1" >
+		<http:listener doc:name="Listener" doc:id="71af37de-589d-414c-b449-7f43fe29895d" config-ref="HTTP_Listener_config" path="/updateEmployee/{EmpId}" allowedMethods="PUT"/>
+		<set-variable value='#[attributes.uriParams.EmpId default ""]' doc:name="Set Variable" doc:id="d82c3f23-c550-4e02-b69d-a6eea711b50d" variableName="EmployeeIdVar"/>
+		<db:update doc:name="Update" doc:id="eb47e06c-5832-4bba-82b6-55c86142fcea" config-ref="Database_Config">
+			<db:sql >update employee set designation=:designation,email=:email,name=:name where EmpId=:EmpId</db:sql>
+			<db:input-parameters ><![CDATA[#[{
+	'name':payload.name,
+	'designation':payload.designation,
+	'email':payload.email,
+	'EmpId':vars.EmployeeIdVar
+}]]]></db:input-parameters>
+		</db:update>
+		<ee:transform doc:name="Transform Message" doc:id="9549769c-02ed-434c-8435-247cf178bab4" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	'message' : "successfully updated"
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="DeleteEmployee" doc:id="c4222d23-d452-4193-a5d5-f10835f8c0ab" >
+		<http:listener doc:name="Listener" doc:id="de9f58ed-9bed-4430-a31a-20c456bfd029" config-ref="HTTP_Listener_config" path="/deleteEmployee/{EmpId}" allowedMethods="DELETE"/>
+		<set-variable value='#[attributes.uriParams.EmpId default ""]' doc:name="Set Variable" doc:id="da742c3d-7463-404a-8f2a-145f946a9d6f" variableName="EmployeeIdVar"/>
+		<db:delete doc:name="Delete" doc:id="762662c4-df1b-4254-b624-563e4d876853" config-ref="Database_Config">
+			<db:sql >delete from employee where EmpId=:EmpId</db:sql>
+			<db:input-parameters ><![CDATA[#[{
+	'EmpId':vars.EmployeeIdVar
+}]]]></db:input-parameters>
+		</db:delete>
+		<ee:transform doc:name="Transform Message" doc:id="e7de1a77-cf80-4a65-a2de-8c468c90f375" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"message": "successfully deleted"
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="FindMaxEmployeeId" doc:id="c6c109a6-faf1-4465-a747-f69728736179" >
+		<http:listener doc:name="Listener" doc:id="f300c471-3789-442f-ba26-4a356acbc0e1" config-ref="HTTP_Listener_config" path="/EmployeeMaxID" allowedMethods="GET" />
+		<db:select doc:name="Select" doc:id="fb0dad78-4055-4a1e-84b8-17ea32a43eba" config-ref="Database_Config" >
+			<db:sql >select IFNULL(MAX(EmpId), 0) as maxid from employee </db:sql>
+			<db:input-parameters ><![CDATA[#[{
+	'email':vars.EmailVar
+}]]]></db:input-parameters>
+		</db:select>
+		<ee:transform doc:name="Transform Message" doc:id="d927bc65-b762-4277-b0f1-021a2cc5a4a9" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+
+</mule>

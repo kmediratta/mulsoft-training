@@ -1,0 +1,9 @@
+{
+"employees":[  
+  {
+    "EmpId": 1,
+    "Name": "Payal",
+    "designation": "associate",
+    "Email": "payal12@gmail.com"
+  }
+]}
