@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:wsc="http://www.mulesoft.org/schema/mule/wsc"
+	xmlns:jms="http://www.mulesoft.org/schema/mule/jms"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/jms http://www.mulesoft.org/schema/mule/jms/current/mule-jms.xsd
+http://www.mulesoft.org/schema/mule/wsc http://www.mulesoft.org/schema/mule/wsc/current/mule-wsc.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="4ba1b45d-25ce-44d9-a960-18f081230522" >
+		<http:listener-connection host="0.0.0.0" port="8081" />
+	</http:listener-config>
+	<http:request-config name="HTTP_Request_configuration" doc:name="HTTP Request configuration" doc:id="ff53bad4-74f2-453a-ae07-549e7f94cfa0" >
+		<http:request-connection host="kapilcustomersdb.us-e2.cloudhub.io" />
+	</http:request-config>
+	<wsc:config name="Web_Service_Consumer_Config" doc:name="Web Service Consumer Config" doc:id="00716ba5-4889-4b1f-9458-c5045d9368ca" >
+		<wsc:connection wsdlLocation="CountryInfoService.wsdl" service="CountryInfoService" port="CountryInfoServiceSoap" address="http://webservices.oorsprong.org/websamples.countryinfo/CountryInfoService.wso" />
+	</wsc:config>
+	<flow name="CallAnotherMuleAPI" doc:id="f99246e3-5f3c-4b14-996d-d32954f61258" >
+		<http:listener doc:name="Listener" doc:id="ca096059-445a-44c5-91fd-462d57f4d8fe" config-ref="HTTP_Listener_config" path="/customers"/>
+		<logger level="INFO" doc:name="Logger" doc:id="97de0dc8-d527-43ee-9433-4865215e073d" message="Calling American Flights API"/>
+		<http:request method="GET" doc:name="Request" doc:id="63f56d42-28c1-4b23-9d00-5ed5663729b1" config-ref="HTTP_Request_configuration" path="/customers">
+			<http:headers ><![CDATA[#[output application/java
+---
+{
+	"client_secret" : "66597F154C8745d1A6C39f676Ad991A3",
+	"client_id" : "40435b8f98ed4c03a07130beebf32dcb"
+}]]]></http:headers>
+		</http:request>
+	</flow>
+	<flow name="assignment4Flow" doc:id="648add74-aa6c-4695-a803-f5310c076b2d" >
+		<http:listener doc:name="Listener" doc:id="6fc1ec93-b039-4828-8575-558a7c199647" config-ref="HTTP_Listener_config" path="/countrycurrency"/>
+		<ee:transform doc:name="Transform Message" doc:id="47ad701e-f663-42c9-b055-a6ccf0923c4f" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/xml
+ns ns0 http://www.oorsprong.org/websamples.countryinfo
+---
+{
+	ns0#CountryCurrency: {
+		ns0#sCountryISOCode: payload.sCountryISOCode
+	}
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<wsc:consume doc:name="Consume" doc:id="eb93f06d-6115-4d58-866f-79d612ec1173" config-ref="Web_Service_Consumer_Config" operation="CountryCurrency" />
+		<ee:transform doc:name="Transform Message" doc:id="e5348dea-3eec-433a-8563-7a9a66986e3d" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/xml
+---
+payload.body]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="MaskSensitiveInformation" doc:id="a9875dc5-7dd4-40d2-bb0c-923f7f6fbf55" >
+		<http:listener doc:name="Listener" doc:id="b9196000-3ec8-4055-be06-d82e26619094" config-ref="HTTP_Listener_config" path="/maskingRequest" >
+			<http:error-response >
+				<http:body ><![CDATA[#[output application/json --- payload]]]></http:body>
+			</http:error-response>
+		</http:listener>
+		<set-payload value="#[payload]" doc:name="Set Payload" doc:id="d36ae17b-78b8-46fb-823a-5dc30d5c44e0" />
+		<set-variable value="#[payload]" doc:name="Set Variable" doc:id="083a4a46-4c96-459b-9758-0cce9cb529a5" variableName="oldpayload" />
+		<ee:transform doc:name="Transform Message" doc:id="319adf29-c606-4f58-ae83-7f1020a77335" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+import * from dw::util::Values
+---
+[payload] mask "ssn" with "*****" mask "accno" with "*****"
+]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="Logger" doc:id="0d5feba7-b74d-4df2-8dfa-4ebf7fecfe57" message="#[payload]" />
+		<choice doc:name="Choice" doc:id="20c12a12-45cd-420b-b9e5-719848fefdf8" >
+			<when expression="#[sizeOf(vars.oldpayload.accno)&gt;8]" >
+				<raise-error doc:name="Raise error" doc:id="3a3d5e5b-8547-4b9a-b1c3-e514fec3de9f" type="DATA:ACCOUNTNOSIZEEXCEEDS" description="AccountNoSizeExceeded" />
+			</when>
+			<when expression='#[sizeOf(vars.oldpayload.accno)==0]'>
+				<raise-error doc:name="Raise error" doc:id="5d711ded-1226-4b61-8f98-4836d3068c9d" type="DATA:INVALID"/>
+			</when>
+		</choice>
+		<ee:transform doc:name="Transform Message" doc:id="0fa08cfa-c7da-4398-9cb1-1781c1bffe8d" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+vars.oldpayload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="65af60ca-a8e3-4d2e-bb40-16ae6d82ec7b" type="DATA:ACCOUNTNOSIZEEXCEEDS" >
+				<ee:transform doc:name="Copy_of_Transform Message" doc:id="04b4502a-46c7-49f1-83f3-59453917c53d">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/java
+---
+{
+	message : error.description
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</on-error-propagate>
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="67f312d4-7856-4e86-87e8-7c7e52303530" type="DATA:INVALID" >
+				<ee:transform doc:name="Copy_of_Transform Message" doc:id="e499aa83-10aa-4d14-abe6-fd96820161d1">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"message": "AccNo is a mandatory field"
+}]]></ee:set-payload>
+					</ee:message>
+					<ee:variables>
+						<ee:set-variable variableName="statusCode"><![CDATA[401]]></ee:set-variable>
+						<ee:set-variable variableName="reasonsPhrase"><![CDATA["UNAUTHORIZED"]]></ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+			</on-error-propagate>
+		</error-handler>
+	</flow>
+</mule>

@@ -1,0 +1,29 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<types:mule xmlns:types="http://www.mulesoft.org/schema/mule/types">
+  <types:catalog>
+    <types:type name="CountryCurrency" format="json">
+      <types:shape format="weave" example="input.json"><![CDATA[%dw 2.0
+
+type CountryCurrency = {| sCountryISOCode: String |} {"example": "{\\\"sCountryISOCode\\\":\\\"US\\\"}"}
+
+]]></types:shape>
+    </types:type>
+    <types:type name="output" format="xml">
+      <types:example format="xml" element="{http://www.oorsprong.org/websamples.countryinfo}CountryCurrency" location="soapinput.xml"/>
+    </types:type>
+  </types:catalog>
+  <types:enrichment select="#47ad701e-f663-42c9-b055-a6ccf0923c4f">
+    <types:processor-declaration>
+      <types:input-event>
+        <types:message>
+          <types:payload type="CountryCurrency"/>
+        </types:message>
+      </types:input-event>
+      <types:output-event>
+        <types:message>
+          <types:payload type="output"/>
+        </types:message>
+      </types:output-event>
+    </types:processor-declaration>
+  </types:enrichment>
+</types:mule>
