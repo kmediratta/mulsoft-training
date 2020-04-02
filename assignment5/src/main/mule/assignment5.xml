@@ -1,0 +1,166 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="dbd7619e-f626-4f30-9c10-09c62ab45569" >
+		<http:listener-connection host="0.0.0.0" port="8081" />
+	</http:listener-config>
+	<flow name="Map_Function" doc:id="d0955a93-6c69-428f-ae0c-78ffe9b6b235" >
+		<http:listener doc:name="Listener" doc:id="052a7db1-c3ff-4ad4-8809-7b9b311ff515" path="/mapEmployees" config-ref="HTTP_Listener_config"/>
+		<ee:transform doc:name="Transform Message" doc:id="599f417f-f4e2-4b9d-a833-b03fa38b5e56" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+employees : payload.employees map (object,index) -> {
+	'employees$(index)':object
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="MapAndFlatten" doc:id="a95ac385-46f6-4703-8c88-25d557147836" >
+		<http:listener doc:name="Listener" doc:id="599d5e79-871d-4c79-8416-8cb82bddb51c" config-ref="HTTP_Listener_config" path="/clothes"/>
+		<ee:transform doc:name="Transform Message" doc:id="96732287-7cdf-40e4-92e6-50a2abd43b14" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload mapObject ((value, key, index) -> {
+		newobject :{
+		names: value.name,
+		colours:flatten(value.colours) joinBy  ' AND '
+		} 	
+})]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="FormatDate" doc:id="80f6121b-0271-49b4-b232-2390b66cb324" >
+		<http:listener doc:name="Listener" doc:id="f9c228f4-1683-4438-8ae9-a0ebf85c0f40" config-ref="HTTP_Listener_config" path="/formatdate"/>
+		<ee:transform doc:name="Transform Message" doc:id="04bf612f-cc15-4480-83d3-7edcc8143ab3" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/dw
+var date='2020-09-09'
+var localDateTime="2020-09-09 10:10:10"
+---
+{
+	'DATE':date as Date { format : "yyyy-MM-dd"},
+	"localDateTime" : localDateTime as LocalDateTime {format : "yyyy-MM-dd HH:mm:ss"},
+}
+]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="CustomFunction" doc:id="b762ad77-3116-4aff-b752-5540113264cf" >
+		<http:listener doc:name="Listener" doc:id="e7d0ff4f-444c-4ac5-ad04-f697eda32d10" config-ref="HTTP_Listener_config" path="/employeeDetails"/>
+		<ee:transform doc:name="Transform Message" doc:id="8e9395b0-04f0-48c0-b69f-0a5cd733e3c3" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/xml
+import * from dw::core::Strings
+
+fun checkAndReplaceEmail(email : String)=
+	if(email contains('bob32'))
+		'kapil@test.com'
+	else
+		email
+---
+employees: {(payload.employees map (item, index) ->{
+	name:upper(item.name),
+	email:checkAndReplaceEmail(item.email),
+	designation:capitalize(item.designation)
+	}
+	)}
+	]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="JsonToXml" doc:id="f2ae5608-3248-487f-a27d-14b4133b73ac" >
+		<http:listener doc:name="jsontoxml" doc:id="266fc2a9-979c-49dc-ab34-77d088d23649" config-ref="HTTP_Listener_config" path="/jsontoxml" allowedMethods="POST" />
+		<ee:transform doc:name="Transform Message" doc:id="5e523331-b1cb-4ffc-be5a-729cce21085d" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/xml
+---
+flights: {(payload map(object, index)->
+{
+	'flight$(index)':object
+})}]]></ee:set-payload>
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="jsontoxml1" ><![CDATA[%dw 2.0
+output application/xml
+---
+flights: {(payload map (object,index) -> {
+
+    'flight': object
+
+    }
+
+)}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<logger level="INFO" doc:name="Logger" doc:id="87edd49c-7e87-40c1-a56b-8372605416a4" />
+	</flow>
+	<flow name="dw_functions" doc:id="261c75c2-e20a-4c77-bb7f-626e623ea9b2" >
+		<http:listener doc:name="dwfunctions" doc:id="5e138f0a-09a4-4d09-8f1e-063276f851e9" config-ref="HTTP_Listener_config" path="/dwfunctions" />
+		<ee:transform doc:name="Transform Message" doc:id="417579c1-efa1-42ba-a531-da65cf2111ff" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/dw
+import dasherize from dw::core::Strings
+type Journey = Object{class: "journey.Journey"}
+---
+payload map(object,index)->
+{
+	planeType: upper(replace(object.planeType,/(Boeing)/) with "Boeing Plane"),
+	destination:dasherize(object.toAirportCode)
+} as Journey
+]]></ee:set-payload>
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="orderfunction" ><![CDATA[%dw 2.0
+output application/json
+
+---
+using (flights=payload map(object,index)->
+	{
+		price1:object.price,
+		planeType:object.planeType,
+		dedate:object.departureDate,
+		availableSeats1: object.emptySeats as Number
+	}
+)
+flights 
+filter ($.availableSeats1 !=0)
+orderBy $.price1 
+		]]></ee:set-variable>
+				<ee:set-variable variableName="flatternjoinbyexample" ><![CDATA[%dw 2.0
+var myData =
+{ user : [
+   {
+     group : "dev",
+     myarray : [
+       { name : "Shoki", id : 5678 },
+       { name : "Mariano", id : 9123 }
+     ]
+   }
+ ]
+}
+output application/json
+---
+flight:payload map(object,index)->
+{
+	sum: flatten(myData.user.myarray),
+	joinby1: ["a","b","c"] joinBy "-"
+}
+]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<logger level="INFO" doc:name="Logger" doc:id="6eb9f6d9-1b2f-4a5e-8211-acfb7c48dd6f" />
+	</flow>
+
+</mule>

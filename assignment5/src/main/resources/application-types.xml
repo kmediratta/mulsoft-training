@@ -1,0 +1,94 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<types:mule xmlns:types="http://www.mulesoft.org/schema/mule/types">
+  <types:catalog>
+    <types:type name="cars" format="json">
+      <types:shape format="weave" example="cars.json"><![CDATA[%dw 2.0
+
+type cars = {|
+  employees: Array<{|    name: String,     email: String  |}>
+|} {"example": "{\\\"employees\\\":[{\\\"name\\\":\\\"Shyam\\\",\\\"email\\\":\\\"shyamjaiswal@gmail.com\\\"},{\\\"name\\\":\\\"Bob\\\",\\\"email\\\":\\\"bob32@gmail.com\\\"},{\\\"name\\\":\\\"Jai\\\",\\\"email\\\":\\\"jai87@gmail.com\\\"}]}"}
+
+]]></types:shape>
+    </types:type>
+    <types:type name="cars2" format="json">
+      <types:shape format="weave" example="cars2.json"><![CDATA[%dw 2.0
+
+type cars2 = {|
+  cars: Array<{|    name: String,     models: String,     color: String,     size: String  |}>
+|} {"example": "{\\\"cars\\\":[{\\\"name\\\":\\\"Ford\\\"},{\\\"models\\\":\\\"X5\\\"},{\\\"color\\\":\\\"red\\\"},{\\\"size\\\":\\\"SUV\\\"}]}"}
+
+]]></types:shape>
+    </types:type>
+    <types:type name="employee" format="json">
+      <types:shape format="weave" example="employeeJson.json"><![CDATA[%dw 2.0
+
+type employee = {|
+  employees: Array<{|    name: String,     email: String,     designation: String  |}>
+|} {"example": "{\\\"employees\\\":[{\\\"name\\\":\\\"Shyam\\\",\\\"email\\\":\\\"shyamjaiswal@gmail.com\\\",\\\"designation\\\":\\\"_associate\\\"},{\\\"name\\\":\\\"Bob\\\",\\\"email\\\":\\\"bob32@gmail.com\\\",\\\"designation\\\":\\\"_sr_associate\\\"},{\\\"name\\\":\\\"Jai\\\",\\\"email\\\":\\\"jai87@gmail.com\\\",\\\"designation\\\":\\\"_sr_associate2\\\"}]}"}
+
+]]></types:shape>
+    </types:type>
+    <types:type name="flightsJson" format="json">
+      <types:shape format="weave" example="flights-example.json"><![CDATA[%dw 2.0
+
+type flightsJson = Array<{|  airline: String,   flightCode: String,   fromAirportCode: String,   toAirportCode: String,   departureDate: String,   emptySeats: Number {"typeId": "int"},   totalSeats: Number {"typeId": "int"},   price: Number {"typeId": "int"},   planeType: String|}> {"example": "[{\\\"airline\\\":\\\"United\\\",\\\"flightCode\\\":\\\"ER38sd\\\",\\\"fromAirportCode\\\":\\\"LAX\\\",\\\"toAirportCode\\\":\\\"SFO\\\",\\\"departureDate\\\":\\\"May 21, 2016\\\",\\\"emptySeats\\\":0,\\\"totalSeats\\\":200,\\\"price\\\":199,\\\"planeType\\\":\\\"Boeing 737\\\"},{\\\"airline\\\":\\\"Delta\\\",\\\"flightCode\\\":\\\"ER0945\\\",\\\"fromAirportCode\\\":\\\"PDX\\\",\\\"toAirportCode\\\":\\\"CLE\\\",\\\"departureDate\\\":\\\"June 1, 2016\\\",\\\"emptySeats\\\":24,\\\"totalSeats\\\":350,\\\"price\\\":450,\\\"planeType\\\":\\\"Boeing 747\\\"}]"}
+
+]]></types:shape>
+    </types:type>
+    <types:type name="clothes" format="json">
+      <types:shape format="weave" example="clothes.json"><![CDATA[%dw 2.0
+
+type clothes = {|
+  clothes: Array<{|    name: String,     colours: Array<String>
+  |}>
+|} {"example": "{\\\"clothes\\\":[{\\\"name\\\":\\\"Shirt\\\",\\\"colours\\\":[\\\"Black\\\",\\\"White\\\",\\\"Blue\\\"]},{\\\"name\\\":\\\"Jacket\\\",\\\"colours\\\":[\\\"Black\\\",\\\"Red\\\",\\\"Blue\\\"]},{\\\"name\\\":\\\"Coat\\\",\\\"colours\\\":[\\\"Green\\\",\\\"Brown\\\",\\\"Grey\\\"]}]}"}
+
+]]></types:shape>
+    </types:type>
+  </types:catalog>
+  <types:enrichment select="#599f417f-f4e2-4b9d-a833-b03fa38b5e56">
+    <types:processor-declaration>
+      <types:input-event>
+        <types:message>
+          <types:payload type="employee"/>
+        </types:message>
+      </types:input-event>
+    </types:processor-declaration>
+  </types:enrichment>
+  <types:enrichment select="#96732287-7cdf-40e4-92e6-50a2abd43b14">
+    <types:processor-declaration>
+      <types:input-event>
+        <types:message>
+          <types:payload type="clothes"/>
+        </types:message>
+      </types:input-event>
+    </types:processor-declaration>
+  </types:enrichment>
+  <types:enrichment select="#8e9395b0-04f0-48c0-b69f-0a5cd733e3c3">
+    <types:processor-declaration>
+      <types:input-event>
+        <types:message>
+          <types:payload type="employee"/>
+        </types:message>
+      </types:input-event>
+    </types:processor-declaration>
+  </types:enrichment>
+  <types:enrichment select="#5e523331-b1cb-4ffc-be5a-729cce21085d">
+    <types:processor-declaration>
+      <types:input-event>
+        <types:message>
+          <types:payload type="flightsJson"/>
+        </types:message>
+      </types:input-event>
+    </types:processor-declaration>
+  </types:enrichment>
+  <types:enrichment select="#417579c1-efa1-42ba-a531-da65cf2111ff">
+    <types:processor-declaration>
+      <types:input-event>
+        <types:message>
+          <types:payload type="flightsJson"/>
+        </types:message>
+      </types:input-event>
+    </types:processor-declaration>
+  </types:enrichment>
+</types:mule>

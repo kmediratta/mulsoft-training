@@ -1,0 +1,19 @@
+{
+"employees":[  
+    {
+	"name":"Shyam",
+	"email":"shyamjaiswal@gmail.com",
+	"designation":"software engineer"
+	},  
+    {
+	"name":"Bob",
+	"email":"bob32@gmail.com",
+	"designation":"senior software engineer"
+	},  
+    {
+	"name":"Jai",
+	"email":"jai87@gmail.com",
+	"designation":"technical manager"
+	}  
+]
+}  

@@ -1,0 +1,28 @@
+{
+   "clothes":[
+      {
+         "name":"Shirt",
+         "colours":[
+            "Black",
+            "White",
+            "Blue"
+         ]
+      },
+      {
+         "name":"Jacket",
+         "colours":[
+            "Black",
+            "Red",
+            "Blue"
+         ]
+      },
+      {
+         "name":"Coat",
+         "colours":[
+            "Green",
+            "Brown",
+			"Grey"
+         ]
+      }
+   ]
+}
